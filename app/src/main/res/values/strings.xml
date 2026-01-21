@@ -1,0 +1,94 @@
+<resources>
+    <string name="app_name">Pocu - App Blocker</string>
+
+    <!-- Accessibility Service -->
+    <string name="accessibility_service_description">Este servicio monitorea las aplicaciones que se abren para bloquearlas según los horarios configurados.</string>
+
+    <!-- Device Admin -->
+    <string name="device_admin_description">Permite proteger la aplicación contra desinstalación no autorizada.</string>
+
+    <!-- MainActivity -->
+    <string name="blocking_status">Estado del bloqueo</string>
+    <string name="blocking_active">Bloqueo ACTIVO</string>
+    <string name="blocking_inactive">Bloqueo INACTIVO</string>
+    <string name="btn_configure_schedule">Configurar Horarios</string>
+    <string name="btn_allowed_apps">Apps Permitidas</string>
+    <string name="btn_change_pin">Cambiar PIN</string>
+    <string name="btn_test_block">🧪 Probar Bloqueo</string>
+    <string name="btn_activate_service">Activar Servicio</string>
+    <string name="btn_deactivate_service">Desactivar Servicio</string>
+    <string name="permissions_required">Permisos Requeridos</string>
+    <string name="grant_usage_access">Conceder Acceso de Uso</string>
+    <string name="grant_overlay_permission">Conceder Permiso de Overlay</string>
+    <string name="enable_accessibility">Habilitar Accesibilidad</string>
+    <string name="enable_device_admin">Habilitar Administrador</string>
+    <string name="current_status">Estado Actual</string>
+
+    <!-- PIN -->
+    <string name="enter_pin">Ingrese su PIN</string>
+    <string name="create_pin">Crear PIN</string>
+    <string name="confirm_pin">Confirmar PIN</string>
+    <string name="pin_mismatch">Los PINs no coinciden</string>
+    <string name="pin_incorrect">PIN incorrecto</string>
+    <string name="pin_too_short">El PIN debe tener al menos 4 dígitos</string>
+    <string name="pin_created">PIN creado exitosamente</string>
+    <string name="pin_changed">PIN cambiado exitosamente</string>
+
+    <!-- Schedule -->
+    <string name="schedule_title">Horarios</string>
+    <string name="start_time">Hora de inicio</string>
+    <string name="end_time">Hora de fin</string>
+    <string name="save">Guardar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="schedule_saved">Horario guardado</string>
+    <string name="add_schedule">Agregar Horario</string>
+    <string name="no_schedules">No hay horarios configurados</string>
+    <string name="delete">Eliminar</string>
+    <string name="monday">Lunes</string>
+    <string name="tuesday">Martes</string>
+    <string name="wednesday">Miércoles</string>
+    <string name="thursday">Jueves</string>
+    <string name="friday">Viernes</string>
+    <string name="saturday">Sábado</string>
+    <string name="sunday">Domingo</string>
+    <string name="all_days">Todos los días</string>
+    <string name="schedule_type">Tipo de Horario</string>
+    <string name="class_time">🚫 Horario de Clases (Apps bloqueadas)</string>
+    <string name="recess_time">✅ Horario de Recreo (Apps permitidas)</string>
+    <string name="class_label">CLASES</string>
+    <string name="recess_label">RECREO</string>
+
+    <!-- Allowed Apps -->
+    <string name="allowed_apps_title">Apps Permitidas</string>
+    <string name="search_apps">Buscar apps...</string>
+    <string name="no_apps_found">No se encontraron aplicaciones</string>
+    <string name="apps_saved">Configuración guardada</string>
+    <string name="calculator">Calculadora</string>
+
+    <!-- Blocker Overlay -->
+    <string name="app_blocked">📚 Estás en Horario de Clases</string>
+    <string name="app_blocked_title">🚫 App Bloqueada</string>
+    <string name="app_blocked_simple">No puedes utilizar esta app.\n\nEstás en horario de clases.</string>
+    <string name="app_blocked_message">Esta app está bloqueada hasta las %1$s\n\n¡Concéntrate en tus estudios!</string>
+    <string name="unblock_time_message">Se desbloqueará a las %1$s</string>
+    <string name="unlock_with_pin">Desbloquear con PIN</string>
+    <string name="go_home">Ir al Inicio</string>
+
+
+    <!-- Service -->
+    <string name="service_notification_title">Pocu está activo</string>
+    <string name="service_notification_text">Protegiendo tus apps según los horarios configurados</string>
+    <string name="notification_channel_name">Servicio de Bloqueo</string>
+    <string name="notification_channel_description">Notificaciones del servicio de bloqueo de apps</string>
+
+    <!-- Permission Dialogs -->
+    <string name="btn_grant_permission">Conceder Permiso</string>
+    <string name="permission_usage_title">Permiso de Acceso de Uso</string>
+    <string name="permission_usage_message">Este permiso permite a Pocu detectar qué aplicaciones estás usando para poder bloquearlas según tus horarios.\n\nEn la siguiente pantalla, busca \"Pocu\" en la lista y activa el permiso.</string>
+    <string name="permission_overlay_title">Permiso de Superposición</string>
+    <string name="permission_overlay_message">Este permiso permite a Pocu mostrar la pantalla de bloqueo sobre otras aplicaciones.\n\nEn la siguiente pantalla, activa \"Permitir mostrar sobre otras apps\".</string>
+    <string name="permission_accessibility_title">Servicio de Accesibilidad</string>
+    <string name="permission_accessibility_message">Este servicio permite a Pocu detectar cuando abres una aplicación bloqueada.\n\nEn la siguiente pantalla:\n1. Busca \"Pocu\" en la lista\n2. Toca sobre él\n3. Activa el servicio</string>
+    <string name="permission_admin_title">Administrador de Dispositivo</string>
+    <string name="permission_admin_message">Este permiso protege a Pocu contra desinstalación no autorizada. Solo podrás desinstalar la app desde la configuración de administradores.\n\nEn la siguiente pantalla, toca \"Activar\".</string>
+</resources>

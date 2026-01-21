@@ -1,0 +1,29 @@
+-- Script para verificar EXACTAMENTE tu estructura SQL
+-- Ejecuta línea por línea y copia los resultados
+
+-- 1. Ver todas las tablas
+SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME;
+
+-- 2. Ver estructura de Horarios
+SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Horarios' ORDER BY ORDINAL_POSITION;
+
+-- 3. Ver estructura de Dispositivos
+SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Dispositivos' ORDER BY ORDINAL_POSITION;
+
+-- 4. Ver estructura de Alumnos
+SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Alumnos' ORDER BY ORDINAL_POSITION;
+
+-- 5. Ver estructura de Cursos
+SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Cursos' ORDER BY ORDINAL_POSITION;
+
+-- 6. Ver estructura de Colegio
+SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Colegio' ORDER BY ORDINAL_POSITION;
+
+-- 7. Ver algunos datos de ejemplo (Horarios)
+SELECT TOP 5 * FROM Horarios;
+
+-- 8. Ver algunos datos de ejemplo (Alumnos)
+SELECT TOP 3 * FROM Alumnos;
+
+-- 9. Ver algunos datos de ejemplo (Dispositivos)
+SELECT TOP 3 * FROM Dispositivos;

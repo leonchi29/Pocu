@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Logo Pocu - Versión OSCURA para tema dark
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- P de Pocu en colores oscuros -->
+    <path
+        android:pathData="M54,10 L54,98 M54,30 L70,30 C80,30 88,38 88,48 C88,58 80,66 70,66 L54,66"
+        android:strokeWidth="8"
+        android:strokeColor="#66BB6A"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent" />
+
+</vector>
