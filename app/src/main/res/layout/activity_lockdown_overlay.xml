@@ -1,85 +1,130 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="32dp"
-    android:background="@drawable/gradient_lockdown_background">
+    android:background="#2196F3"
+    android:padding="32dp">
 
-    <!-- Emoji grande -->
-    <TextView
-        android:id="@+id/tvEmoji"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="🔒"
-        android:textSize="100sp" />
-
-    <TextView
-        android:id="@+id/tvBlockedTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="DISPOSITIVO BLOQUEADO"
-        android:textSize="28sp"
-        android:textColor="@color/white"
-        android:textStyle="bold"
-        android:textAlignment="center"
-        android:layout_marginTop="24dp" />
-
-    <TextView
-        android:id="@+id/tvBlockedMessage"
+    <!-- Contenido centrado -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:textColor="@color/white"
-        android:alpha="0.95"
-        android:textAlignment="center"
-        android:lineSpacingExtra="4dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginHorizontal="16dp" />
+        android:layout_centerInParent="true"
+        android:orientation="vertical"
+        android:gravity="center">
 
-    <TextView
-        android:id="@+id/tvUnblockInfo"
+        <!-- Símbolo de prohibición/bloqueo grande -->
+        <TextView
+            android:id="@+id/tvEmoji"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🚫"
+            android:textSize="100sp" />
+
+        <!-- Título con emoji -->
+        <TextView
+            android:id="@+id/tvBlockedTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🚫 Dispositivo Bloqueado"
+            android:textSize="26sp"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:layout_marginTop="24dp" />
+
+        <!-- Mensaje principal -->
+        <TextView
+            android:id="@+id/tvBlockedMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No puedes modificar los permisos de la aplicación por reglamento escolar."
+            android:textSize="18sp"
+            android:textColor="@android:color/white"
+            android:textAlignment="center"
+            android:lineSpacingExtra="6dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginHorizontal="16dp" />
+
+        <!-- Info de desbloqueo / tiempo restante -->
+        <TextView
+            android:id="@+id/tvUnblockInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tiempo restante: 01:00"
+            android:textSize="20sp"
+            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textAlignment="center"
+            android:layout_marginTop="24dp" />
+
+        <!-- Botones ocultos por defecto para bloqueo temporal -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOpenPlayStore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Abrir Play Store"
+            android:textSize="16sp"
+            android:layout_marginTop="32dp"
+            android:visibility="gone"
+            app:cornerRadius="24dp"
+            style="@style/Widget.MaterialComponents.Button" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOpenSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Abrir Ajustes"
+            android:textSize="16sp"
+            android:layout_marginTop="12dp"
+            android:visibility="gone"
+            app:cornerRadius="24dp"
+            style="@style/Widget.MaterialComponents.Button" />
+
+        <!-- Botón principal "Voy a esperar" -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGoHome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Voy a esperar"
+            android:textSize="16sp"
+            android:layout_marginTop="32dp"
+            android:backgroundTint="@android:color/white"
+            android:textColor="#2196F3"
+            app:cornerRadius="24dp"
+            style="@style/Widget.MaterialComponents.Button" />
+
+    </LinearLayout>
+
+    <!-- Logo Pocu™ en la parte inferior -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="14sp"
-        android:textColor="@color/white"
-        android:alpha="0.7"
-        android:textAlignment="center"
-        android:layout_marginTop="24dp" />
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="32dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnOpenPlayStore"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Abrir Play Store"
-        android:textSize="16sp"
-        android:layout_marginTop="32dp"
-        app:cornerRadius="24dp"
-        app:icon="@android:drawable/ic_menu_search"
-        style="@style/Widget.MaterialComponents.Button" />
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/logo_pocu"
+            android:scaleType="fitCenter"
+            android:contentDescription="Logo Pocu" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnOpenSettings"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Abrir Ajustes"
-        android:textSize="16sp"
-        android:layout_marginTop="12dp"
-        app:cornerRadius="24dp"
-        app:icon="@android:drawable/ic_menu_preferences"
-        style="@style/Widget.MaterialComponents.Button" />
+        <TextView
+            android:id="@+id/tvLogo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="Pocu™"
+            android:textSize="20sp"
+            android:textColor="@android:color/white"
+            android:textStyle="bold" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnGoHome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Ir al inicio"
-        android:textSize="14sp"
-        android:layout_marginTop="16dp"
-        app:cornerRadius="24dp"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+    </LinearLayout>
 
-</LinearLayout>
+</RelativeLayout>
 

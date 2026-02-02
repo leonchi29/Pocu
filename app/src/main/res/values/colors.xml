@@ -12,4 +12,33 @@
     <color name="purple_dark_primary">#FF1A0033</color>
     <color name="purple_dark_variant">#FF2D0052</color>
     <color name="purple_dark_surface">#FF120024</color>
+
+    <!-- Nuevo esquema de colores -->
+    <!-- Azul principal -->
+    <color name="primary_blue">#1E88E5</color>
+    <color name="primary_blue_title">#1565C0</color>
+    <color name="primary_blue_light">#E3F2FD</color>
+
+    <!-- Verde OK -->
+    <color name="success_green">#2E7D32</color>
+    <color name="success_green_dark">#1B5E20</color>
+    <color name="success_green_light">#E8F5E9</color>
+
+    <!-- Grises -->
+    <color name="text_primary">#1F2937</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="text_tertiary">#4B5563</color>
+
+    <!-- Fondos -->
+    <color name="app_background">#F9FAFB</color>
+
+    <!-- Colores específicos para estado actual - visibles en ambos modos -->
+    <color name="state_title_color">#2E7D32</color>
+    <color name="state_time_color">#1B5E20</color>
+
+    <!-- Color para nombre del estudiante -->
+    <color name="student_name_color">#1565C0</color>
+
+    <!-- Color de fondo del login (igual al fondo del icono) -->
+    <color name="login_background">#FFFFFF</color>
 </resources>

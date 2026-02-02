@@ -1,26 +1,26 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme for Dark Mode -->
     <style name="Theme.Pocu" parent="Theme.MaterialComponents.DayNight.NoActionBar">
-        <!-- Primary brand color - Morado oscuro -->
-        <item name="colorPrimary">@color/purple_dark_variant</item>
-        <item name="colorPrimaryVariant">@color/purple_dark_primary</item>
+        <!-- Primary brand color - Azul brillante para modo oscuro -->
+        <item name="colorPrimary">@color/primary_blue</item>
+        <item name="colorPrimaryVariant">@color/primary_blue_title</item>
         <item name="colorOnPrimary">@color/white</item>
-        <!-- Secondary brand color -->
-        <item name="colorSecondary">@color/purple_200</item>
-        <item name="colorSecondaryVariant">@color/purple_700</item>
-        <item name="colorOnSecondary">@color/black</item>
+        <!-- Secondary brand color - Verde brillante para modo oscuro -->
+        <item name="colorSecondary">@color/success_green</item>
+        <item name="colorSecondaryVariant">@color/success_green_dark</item>
+        <item name="colorOnSecondary">@color/white</item>
         <!-- Background and surface -->
-        <item name="android:colorBackground">@color/purple_dark_surface</item>
-        <item name="colorSurface">@color/purple_dark_primary</item>
+        <item name="android:colorBackground">@color/app_background</item>
+        <item name="colorSurface">@color/app_background</item>
         <!-- Status bar color -->
-        <item name="android:statusBarColor">@color/purple_dark_primary</item>
+        <item name="android:statusBarColor">@color/primary_blue_title</item>
         <!-- Button colors -->
         <item name="materialButtonStyle">@style/Widget.Pocu.Button.Dark</item>
     </style>
 
     <!-- Custom button style for dark mode -->
     <style name="Widget.Pocu.Button.Dark" parent="Widget.MaterialComponents.Button">
-        <item name="backgroundTint">@color/purple_dark_variant</item>
+        <item name="backgroundTint">@color/primary_blue</item>
         <item name="android:textColor">@color/white</item>
     </style>
 </resources>

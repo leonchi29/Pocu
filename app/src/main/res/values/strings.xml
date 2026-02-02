@@ -22,6 +22,7 @@
     <string name="grant_overlay_permission">Conceder Permiso de Overlay</string>
     <string name="enable_accessibility">Habilitar Accesibilidad</string>
     <string name="enable_device_admin">Habilitar Administrador</string>
+    <string name="grant_location_permission">📍 Permitir Ubicación</string>
     <string name="current_status">Estado Actual</string>
 
     <!-- PIN -->
@@ -90,5 +91,7 @@
     <string name="permission_accessibility_title">Servicio de Accesibilidad</string>
     <string name="permission_accessibility_message">Este servicio permite a Pocu detectar cuando abres una aplicación bloqueada.\n\nEn la siguiente pantalla:\n1. Busca \"Pocu\" en la lista\n2. Toca sobre él\n3. Activa el servicio</string>
     <string name="permission_admin_title">Administrador de Dispositivo</string>
-    <string name="permission_admin_message">Este permiso protege a Pocu contra desinstalación no autorizada. Solo podrás desinstalar la app desde la configuración de administradores.\n\nEn la siguiente pantalla, toca \"Activar\".</string>
+    <string name="permission_admin_message">Este permiso protege a Pocu contra desinstalación no autorizada.\n\nEn la siguiente pantalla, toca \"Activar\".</string>
+    <string name="permission_location_title">Permiso de Ubicación</string>
+    <string name="permission_location_message">Este permiso permite al colegio conocer tu ubicación durante el horario de clases para tu seguridad.\n\n📍 Tu ubicación solo se comparte durante el horario escolar.\n🔒 Fuera del horario de clases, tu privacidad está protegida.\n\nEn la siguiente pantalla, selecciona \"Permitir todo el tiempo\" para un correcto funcionamiento.</string>
 </resources>

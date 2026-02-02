@@ -1,2 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<color xmlns:android="http://schemas.android.com/apk/res/android">#00000000</color>
+<!-- Logo oscuro para tema dark -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#2E7D32"
+        android:pathData="M54,9C30.25,9 9,30.25 9,54C9,77.75 30.25,99 54,99C77.75,99 99,77.75 99,54C99,30.25 77.75,9 54,9Z" />
+    <path
+        android:fillColor="#A5D6A7"
+        android:pathData="M50.2,38.8C50.2,37.4 51.3,36.3 52.7,36.3C54.1,36.3 55.2,37.4 55.2,38.8V58.8C55.2,60.2 54.1,61.3 52.7,61.3C51.3,61.3 50.2,60.2 50.2,58.8V38.8Z"
+        android:strokeWidth="2" />
+</vector>

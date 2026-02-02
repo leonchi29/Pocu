@@ -182,6 +182,14 @@ class PermissionMonitorService : Service() {
         currentOverlay: Boolean,
         currentUsageStats: Boolean
     ) {
+        // Si es un bloqueo temporal, no hacer nada (dejar que expire)
+        if (prefs.getLockdownUntil() > 0) {
+            if (prefs.isTemporaryLockdownExpired()) {
+                prefs.clearTemporaryLockdown()
+            }
+            return
+        }
+
         val wasDeviceAdmin = prefs.wasDeviceAdminGranted()
         val wasAccessibility = prefs.wasAccessibilityGranted()
         val wasOverlay = prefs.wasOverlayGranted()

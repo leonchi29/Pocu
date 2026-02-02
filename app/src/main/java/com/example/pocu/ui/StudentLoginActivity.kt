@@ -1,7 +1,9 @@
 package com.example.pocu.ui
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
@@ -10,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.pocu.data.AppPreferences
 import com.example.pocu.databinding.ActivityStudentLoginBinding
+import com.example.pocu.network.AddDeviceRequest
 import com.example.pocu.network.ApiClient
 import com.example.pocu.network.StudentSearchRequest
 import kotlinx.coroutines.Dispatchers
@@ -33,10 +36,17 @@ class StudentLoginActivity : AppCompatActivity() {
 
         prefs = AppPreferences(this)
 
-        // Si ya está registrado, ir directamente a MainActivity
-        if (prefs.isStudentRegistered()) {
-            goToMainActivity()
-            return
+        Log.d("StudentLogin", "=== onCreate ===")
+        Log.d("StudentLogin", "isStudentRegistered: ${prefs.isStudentRegistered()}")
+        Log.d("StudentLogin", "StudentRut guardado: ${prefs.getStudentRut()}")
+
+        // Si ya hay datos del estudiante, registrar dispositivo automáticamente y continuar
+        val savedRut = prefs.getStudentRut()
+        if (!savedRut.isNullOrEmpty()) {
+            Log.d("StudentLogin", "RUT encontrado, registrando dispositivo automáticamente...")
+            registerDeviceAutomatically(savedRut)
+        } else {
+            Log.d("StudentLogin", "No hay RUT guardado, mostrando pantalla de login")
         }
 
         setupClickListeners()
@@ -141,9 +151,19 @@ class StudentLoginActivity : AppCompatActivity() {
 
                     // Guardar datos del estudiante
                     val fullName = "${generalInfo.firstName} ${generalInfo.lastName}"
-                    Log.d("StudentLogin", "Nombre del alumno: $fullName")
-                    Log.d("StudentLogin", "Curso del alumno: '${generalInfo.courseLevel}'")
+                    val studentNumericId = generalInfo.id
+
+                    Log.d("StudentLogin", "========================================")
+                    Log.d("StudentLogin", "DATOS DEL ALUMNO RECIBIDOS:")
+                    Log.d("StudentLogin", "ID numérico del alumno: $studentNumericId")
+                    Log.d("StudentLogin", "Nombre: $fullName")
+                    Log.d("StudentLogin", "Curso: '${generalInfo.courseLevel}'")
                     Log.d("StudentLogin", "Colegio: '${generalInfo.schoolName}'")
+                    Log.d("StudentLogin", "========================================")
+
+                    if (studentNumericId == 0) {
+                        Log.e("StudentLogin", "⚠️ ADVERTENCIA: El ID del alumno es 0! Revisa el JSON de la API")
+                    }
 
                     prefs.saveStudentData(
                         studentId = formattedRut,
@@ -152,6 +172,9 @@ class StudentLoginActivity : AppCompatActivity() {
                         schoolName = generalInfo.schoolName,
                         studentCourse = generalInfo.courseLevel
                     )
+
+                    // Guardar el ID numérico del alumno (necesario para la API de registro de dispositivo)
+                    prefs.saveStudentNumericId(studentNumericId)
 
                     // Verificar que se guardó correctamente
                     val savedCourse = prefs.getStudentCourse()
@@ -168,6 +191,17 @@ class StudentLoginActivity : AppCompatActivity() {
                         "com.sec.android.app.popupcalculator",
                         "com.example.pocu"
                     ))
+
+                    // Obtener información del dispositivo
+                    val deviceSerial = getDeviceSerial()
+                    val deviceBrand = Build.MANUFACTURER ?: "Desconocido"
+                    val deviceModel = Build.MODEL ?: "Desconocido"
+
+                    // Guardar serial del dispositivo
+                    prefs.saveDeviceSerial(deviceSerial)
+
+                    // Registrar dispositivo en la API (usando el ID numérico del alumno)
+                    registerDeviceInApi(studentNumericId, deviceSerial, deviceBrand, deviceModel)
 
                     // Marcar como registrado
                     prefs.saveDeviceId("DEVICE-${System.currentTimeMillis()}")
@@ -357,12 +391,163 @@ class StudentLoginActivity : AppCompatActivity() {
             .show()
     }
 
+    /**
+     * Registra el dispositivo automáticamente cuando el usuario ya tiene datos guardados
+     * y va directamente a MainActivity
+     */
+    private fun registerDeviceAutomatically(studentRut: String) {
+        lifecycleScope.launch {
+            try {
+                // Obtener el ID numérico del alumno guardado
+                var studentNumericId = prefs.getStudentNumericId()
+
+                // Si no hay ID numérico guardado, consultamos la API para obtenerlo
+                if (studentNumericId == -1) {
+                    Log.d("StudentLogin", "No hay ID numérico guardado, consultando API...")
+
+                    try {
+                        val fullInfoResponse = withContext(Dispatchers.IO) {
+                            ApiClient.getApiService().getStudentFullInfo(studentRut)
+                        }
+
+                        if (fullInfoResponse.statusCode == 200 && fullInfoResponse.data != null) {
+                            studentNumericId = fullInfoResponse.data.generalInfo.id
+                            // Guardar para futuras llamadas
+                            prefs.saveStudentNumericId(studentNumericId)
+                            Log.d("StudentLogin", "ID numérico obtenido de API: $studentNumericId")
+                        } else {
+                            Log.w("StudentLogin", "No se pudo obtener ID de la API, saltando registro")
+                            goToMainActivity()
+                            return@launch
+                        }
+                    } catch (e: Exception) {
+                        Log.e("StudentLogin", "Error consultando API para obtener ID: ${e.message}")
+                        goToMainActivity()
+                        return@launch
+                    }
+                }
+
+                val deviceSerial = getDeviceSerial()
+                val deviceBrand = Build.MANUFACTURER ?: "Desconocido"
+                val deviceModel = Build.MODEL ?: "Desconocido"
+
+                Log.d("StudentLogin", "========================================")
+                Log.d("StudentLogin", "Registro AUTOMÁTICO de dispositivo")
+                Log.d("StudentLogin", "Alumno ID: $studentNumericId")
+                Log.d("StudentLogin", "RUT: $studentRut")
+                Log.d("StudentLogin", "Serial: $deviceSerial")
+                Log.d("StudentLogin", "Marca: $deviceBrand")
+                Log.d("StudentLogin", "Modelo: $deviceModel")
+                Log.d("StudentLogin", "========================================")
+
+                val request = AddDeviceRequest(
+                    studentId = studentNumericId,
+                    brand = deviceBrand,
+                    model = deviceModel,
+                    serial = deviceSerial
+                )
+
+                val response = withContext(Dispatchers.IO) {
+                    ApiClient.getApiService().addDevice(request)
+                }
+
+                Log.d("StudentLogin", "Response code: ${response.code()}")
+
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    Log.d("StudentLogin", "✅ Dispositivo registrado: ${body?.message}")
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Log.w("StudentLogin", "⚠️ Registro retornó ${response.code()}: $errorBody")
+                }
+
+            } catch (e: Exception) {
+                Log.e("StudentLogin", "❌ Error en registro automático: ${e.message}", e)
+            }
+
+            // Siempre ir a MainActivity después del intento de registro
+            goToMainActivity()
+        }
+    }
+
     private fun getDaysText(daysOfWeek: List<Int>): String {
         val dayNames = mapOf(
             1 to "Dom", 2 to "Lun", 3 to "Mar",
             4 to "Mié", 5 to "Jue", 6 to "Vie", 7 to "Sáb"
         )
         return daysOfWeek.sorted().mapNotNull { dayNames[it] }.joinToString(", ")
+    }
+
+    /**
+     * Obtiene el serial/identificador único del dispositivo
+     */
+    @Suppress("DEPRECATION", "HardwareIds")
+    private fun getDeviceSerial(): String {
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                // En Android 8+, usamos Android ID como identificador único
+                Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID) ?: ""
+            } else {
+                Build.SERIAL ?: ""
+            }
+        } catch (e: Exception) {
+            Log.e("StudentLogin", "Error obteniendo serial del dispositivo", e)
+            "UNKNOWN-${System.currentTimeMillis()}"
+        }
+    }
+
+    /**
+     * Registra el dispositivo en la API del servidor
+     * Se llama cada vez que un estudiante inicia sesión en un dispositivo nuevo
+     */
+    private fun registerDeviceInApi(
+        studentId: Int,
+        deviceSerial: String,
+        brand: String,
+        model: String
+    ) {
+        lifecycleScope.launch {
+            try {
+                Log.d("StudentLogin", "========================================")
+                Log.d("StudentLogin", "Registrando dispositivo en API...")
+                Log.d("StudentLogin", "Alumno ID: $studentId")
+                Log.d("StudentLogin", "Serial: $deviceSerial")
+                Log.d("StudentLogin", "Marca: $brand")
+                Log.d("StudentLogin", "Modelo: $model")
+                Log.d("StudentLogin", "========================================")
+
+                val request = AddDeviceRequest(
+                    studentId = studentId,
+                    brand = brand,
+                    model = model,
+                    serial = deviceSerial
+                )
+
+                val response = withContext(Dispatchers.IO) {
+                    ApiClient.getApiService().addDevice(request)
+                }
+
+                Log.d("StudentLogin", "Response code: ${response.code()}")
+                Log.d("StudentLogin", "Response success: ${response.isSuccessful}")
+
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    Log.d("StudentLogin", "Response body: success=${body?.success}, message=${body?.message}, deviceId=${body?.deviceId}")
+
+                    if (body?.success == true) {
+                        Log.d("StudentLogin", "✅ Dispositivo registrado exitosamente: ${body.message}")
+                    } else {
+                        Log.w("StudentLogin", "⚠️ API respondió pero success=false: ${body?.message}")
+                    }
+                } else {
+                    val errorBody = response.errorBody()?.string()
+                    Log.e("StudentLogin", "❌ Error HTTP ${response.code()}: ${response.message()}")
+                    Log.e("StudentLogin", "Error body: $errorBody")
+                }
+            } catch (e: Exception) {
+                Log.e("StudentLogin", "❌ Exception registrando dispositivo en API: ${e.message}", e)
+            }
+        }
     }
 }
 

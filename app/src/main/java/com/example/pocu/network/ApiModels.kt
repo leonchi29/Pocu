@@ -140,6 +140,7 @@ data class StudentFullData(
 )
 
 data class StudentGeneralInfo(
+    @SerializedName("idAlumno") val id: Int,
     @SerializedName("nombre") val firstName: String,
     @SerializedName("apellido") val lastName: String,
     @SerializedName("curso") val courseLevel: String,
@@ -157,3 +158,55 @@ data class StudentScheduleRaw(
     @SerializedName("inicio") val startTime: String, // formato: "HH:mm:ss"
     @SerializedName("fin") val endTime: String       // formato: "HH:mm:ss"
 )
+
+// ============ Location Tracking Models ============
+
+/**
+ * Solicitud de actualización de ubicación GPS
+ * Se envía cada 20 minutos durante horario de clases
+ */
+data class LocationUpdateRequest(
+    @SerializedName("dispositivo_serial") val deviceSerial: String,
+    @SerializedName("alumno_rut") val studentRut: String,
+    @SerializedName("latitud") val latitude: Double,
+    @SerializedName("longitud") val longitude: Double,
+    @SerializedName("precision") val accuracy: Float,
+    @SerializedName("timestamp") val timestamp: Long,
+    @SerializedName("bateria") val batteryLevel: Int
+)
+
+data class LocationUpdateResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("message") val message: String?
+)
+
+// ============ Device Registration Models ============
+
+/**
+ * Solicitud para registrar un dispositivo con el ID del estudiante
+ * Se envía cuando el estudiante inicia sesión por primera vez en un dispositivo
+ * Endpoint: https://pocu-api.azurewebsites.net/api/v1/dispositivos/add
+ *
+ * Body esperado:
+ * {
+ *   "idAlumno": 1,
+ *   "marca": "REDMI",
+ *   "modelo": "NOTE C34",
+ *   "serial": "ABC1234",
+ *   "numTel": "0"
+ * }
+ */
+data class AddDeviceRequest(
+    @SerializedName("idAlumno") val studentId: Int,
+    @SerializedName("marca") val brand: String,
+    @SerializedName("modelo") val model: String,
+    @SerializedName("serial") val serial: String,
+    @SerializedName("numTel") val phoneNumber: String = "0"
+)
+
+data class AddDeviceResponse(
+    @SerializedName("success") val success: Boolean,
+    @SerializedName("message") val message: String?,
+    @SerializedName("dispositivo_id") val deviceId: Int?
+)
+

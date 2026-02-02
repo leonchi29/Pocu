@@ -1,5 +1,6 @@
 package com.example.pocu.ui
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
@@ -143,9 +144,24 @@ class PinActivity : AppCompatActivity() {
                 finish()
             }
             action == MainActivity.ACTION_LOGOUT -> {
+                // Desactivar Device Admin para permitir desinstalación
+                try {
+                    val devicePolicyManager = getSystemService(Context.DEVICE_POLICY_SERVICE) as android.app.admin.DevicePolicyManager
+                    val adminComponent = android.content.ComponentName(this, com.example.pocu.admin.AppDeviceAdminReceiver::class.java)
+                    if (devicePolicyManager.isAdminActive(adminComponent)) {
+                        devicePolicyManager.removeActiveAdmin(adminComponent)
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("PinActivity", "Error removing device admin: ${e.message}")
+                }
+
+                // Detener servicios
+                AppBlockerService.stop(this)
+
                 // Limpiar datos de estudiante y cerrar sesión
                 prefs.clearStudentData()
                 prefs.clearWebSyncData()
+                prefs.setServiceEnabled(false)
 
                 // Ir a pantalla de login
                 startActivity(Intent(this, StudentLoginActivity::class.java).apply {

@@ -42,6 +42,15 @@ class AppBlockerAccessibilityService : AccessibilityService() {
             "com.teslacoilsw.launcher",
             "com.microsoft.launcher",
             "com.nova.launcher",
+            "com.lge.launcher2",
+            "com.lge.launcher3",
+            "com.asus.launcher",
+            "com.hihonor.android.launcher",
+            "com.realme.launcher",
+            "com.nothing.launcher",
+            "com.transsion.hilauncher",
+            "com.bbk.launcher2",
+            "com.android.quicksearchbox",
             // System UI (notifications, status bar)
             "com.android.systemui",
             // Keyboards
@@ -55,6 +64,9 @@ class AppBlockerAccessibilityService : AccessibilityService() {
             // Our app
             "com.example.pocu"
         )
+
+        // Lista de launchers dinámicamente detectados
+        private var detectedLaunchers: Set<String> = emptySet()
 
         // Apps allowed during lockdown mode (Play Store and Settings to reinstall the app)
         private val LOCKDOWN_ALLOWED_PACKAGES = setOf(
@@ -135,7 +147,21 @@ class AppBlockerAccessibilityService : AccessibilityService() {
     override fun onCreate() {
         super.onCreate()
         prefs = AppPreferences(this)
+        detectLaunchers()
         Log.d(TAG, "=== Service CREATED ===")
+    }
+
+    private fun detectLaunchers() {
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_MAIN)
+            intent.addCategory(android.content.Intent.CATEGORY_HOME)
+            val launchers = packageManager.queryIntentActivities(intent, 0)
+            detectedLaunchers = launchers.map { it.activityInfo.packageName }.toSet()
+            Log.d(TAG, "Detected launchers: $detectedLaunchers")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error detecting launchers", e)
+            detectedLaunchers = emptySet()
+        }
     }
 
     override fun onServiceConnected() {
@@ -186,11 +212,56 @@ class AppBlockerAccessibilityService : AccessibilityService() {
             return
         }
 
-        // FIRST: Always ignore our own app - this is critical!
+        // Skip keyboards first - always allowed
+        if (packageName.contains("inputmethod") || packageName.contains("keyboard")) {
+            Log.d(TAG, "Skipping keyboard: $packageName")
+            return
+        }
+
+        // Skip if same package as before
+        if (packageName == currentForegroundPackage) return
+        currentForegroundPackage = packageName
+
+        Log.d(TAG, ">>> Window changed to: $packageName")
+
+        // ==================== LOCKDOWN MODE ====================
+        // Durante el bloqueo temporal, bloquear TODAS las apps excepto launcher y nuestra app
+        if (prefs.isLockdownMode()) {
+            // Check if temporary lockdown has expired
+            if (prefs.isTemporaryLockdownExpired()) {
+                Log.d(TAG, "Temporary lockdown expired, clearing...")
+                prefs.clearTemporaryLockdown()
+                // Continue with normal flow after lockdown expires
+            } else {
+                // LOCKDOWN ACTIVO - Solo permitir launcher, teclados y nuestra app
+
+                // Permitir nuestra app durante el lockdown
+                if (packageName == "com.example.pocu") {
+                    Log.d(TAG, "Lockdown - allowing our app")
+                    return
+                }
+
+                // Permitir launcher/system UI durante lockdown
+                if (isSystemPackage(packageName)) {
+                    Log.d(TAG, "Lockdown - allowing system package: $packageName")
+                    return
+                }
+
+                // Bloquear TODO lo demás durante lockdown
+                Log.d(TAG, "!!! LOCKDOWN MODE - BLOCKING APP: $packageName !!!")
+                lastBlockedPackage = packageName
+                lastBlockTime = System.currentTimeMillis()
+                showLockdownOverlay(packageName)
+                return
+            }
+        }
+
+        // ==================== NORMAL MODE (no lockdown) ====================
+
+        // Nuestra app siempre permitida
         if (packageName == "com.example.pocu") {
-            Log.d(TAG, "In our own app - setting flag")
+            Log.d(TAG, "In our own app - allowed")
             wasInOurApp = true
-            currentForegroundPackage = packageName
             return
         }
 
@@ -208,90 +279,57 @@ class AppBlockerAccessibilityService : AccessibilityService() {
             return
         }
 
-        // Skip keyboards
-        if (packageName.contains("inputmethod") || packageName.contains("keyboard")) {
-            Log.d(TAG, "Skipping keyboard: $packageName")
-            return
-        }
-
-        // Skip if same package as before
-        if (packageName == currentForegroundPackage) return
-        currentForegroundPackage = packageName
-
-        Log.d(TAG, ">>> Window changed to: $packageName")
-
-        // ==================== LOCKDOWN MODE ====================
-        // If in lockdown mode, block EVERYTHING except Play Store, Settings and essentials
-        // But still block dangerous sections within Settings!
-        if (prefs.isLockdownMode()) {
-            // Block dangerous settings sections even in lockdown
-            // Only allow main Settings screen, not app management/permissions
-            if (packageName.contains("settings") && isDangerousSettingsSection(className)) {
-                Log.d(TAG, "!!! LOCKDOWN - BLOCKING DANGEROUS SETTINGS SECTION: $className !!!")
-                lastBlockedPackage = packageName
-                lastBlockTime = System.currentTimeMillis()
-                showLockdownOverlay(packageName)
-                return
-            }
-
-            // Block dangerous packages even in lockdown
-            if (isSettingsOrPackageManager(packageName)) {
-                Log.d(TAG, "!!! LOCKDOWN - BLOCKING DANGEROUS PACKAGE: $packageName !!!")
-                lastBlockedPackage = packageName
-                lastBlockTime = System.currentTimeMillis()
-                showLockdownOverlay(packageName)
-                return
-            }
-
-            if (isAllowedInLockdown(packageName)) {
-                Log.d(TAG, "Lockdown mode - allowing essential app: $packageName")
-                return
-            }
-
-            Log.d(TAG, "!!! LOCKDOWN MODE - BLOCKING APP: $packageName !!!")
-            lastBlockedPackage = packageName
-            lastBlockTime = System.currentTimeMillis()
-            showLockdownOverlay(packageName)
-            return
-        }
-
-        // ==================== NORMAL MODE ====================
-
         // Skip launchers and system UI
         if (isSystemPackage(packageName)) {
             Log.d(TAG, "Skipping launcher/system UI: $packageName")
             return
         }
 
-        // ALWAYS block dangerous sections - EVEN IF SERVICE IS DISABLED!
-        // This prevents students from modifying permissions or uninstalling the app
-        if (isSettingsOrPackageManager(packageName)) {
-            Log.d(TAG, "!!! ALWAYS BLOCKING DANGEROUS APP: $packageName !!!")
-            // Activate lockdown mode if trying to access dangerous settings
-            if (prefs.isServiceEnabled() && prefs.werePermissionsGranted()) {
-                Log.w(TAG, "!!! ATTEMPTING TO ACCESS DANGEROUS APP - ACTIVATING LOCKDOWN !!!")
-                prefs.setLockdownMode(true)
-                prefs.setLockdownReason("Intento de acceso a configuración peligrosa")
+        // ==================== UNINSTALL PROTECTION ====================
+        // Detectar intento de desinstalar POCU específicamente
+        // Solo bloquear si el estudiante tiene sesión activa
+        if (isAttemptingToUninstallPocu(event, packageName, className)) {
+            if (prefs.isStudentLoggedIn()) {
+                Log.d(TAG, "!!! BLOCKING POCU UNINSTALL ATTEMPT - Student is logged in !!!")
+                prefs.setPermissionLockdown() // Bloqueo acumulativo de 20 segundos
+                lastBlockedPackage = packageName
+                lastBlockTime = System.currentTimeMillis()
+                showBlockerOverlay(packageName, true)
+                return
+            } else {
+                Log.d(TAG, "Allowing POCU uninstall - Student is NOT logged in")
+                // Permitir desinstalar si no hay sesión
             }
-            lastBlockedPackage = packageName
-            lastBlockTime = System.currentTimeMillis()
-            showBlockerOverlay(packageName)
-            return
         }
 
-        // Block dangerous sections WITHIN Settings app
-        if (packageName.contains("settings") && isDangerousSettingsSection(className)) {
-            Log.d(TAG, "!!! BLOCKING DANGEROUS SETTINGS SECTION: $className !!!")
-            // Activate lockdown mode if trying to access dangerous settings
-            if (prefs.isServiceEnabled() && prefs.werePermissionsGranted()) {
-                Log.w(TAG, "!!! ATTEMPTING TO ACCESS DANGEROUS SETTINGS - ACTIVATING LOCKDOWN !!!")
-                prefs.setLockdownMode(true)
-                prefs.setLockdownReason("Intento de acceso a configuración peligrosa")
+        // ==================== PERMISSION PROTECTION ====================
+        // Solo bloquear permisos y configuraciones peligrosas SI hay sesión activa
+        // Sin sesión activa, el usuario puede tocar los permisos libremente
+        if (!prefs.isStudentLoggedIn()) {
+            Log.d(TAG, "No active session - allowing access to permissions and settings")
+            // Continuar con el flujo normal (no bloquear permisos)
+        } else {
+            // CON SESIÓN ACTIVA: Bloquear acceso a permisos y configuraciones peligrosas
+            if (isSettingsOrPackageManager(packageName)) {
+                Log.d(TAG, "!!! BLOCKING DANGEROUS APP (student logged in): $packageName !!!")
+                Log.w(TAG, "!!! ATTEMPTING TO ACCESS PERMISSIONS - ACTIVATING LOCKDOWN !!!")
+                prefs.setPermissionLockdown()
+                lastBlockedPackage = packageName
+                lastBlockTime = System.currentTimeMillis()
+                showBlockerOverlay(packageName, true)
+                return
             }
-            lastBlockedPackage = packageName
-            lastBlockTime = System.currentTimeMillis()
-            showBlockerOverlay(packageName)
-            return
+
+            // Block dangerous sections WITHIN Settings app
+            if (packageName.contains("settings") && isDangerousSettingsSection(className)) {
+                Log.d(TAG, "!!! BLOCKING DANGEROUS SETTINGS SECTION (student logged in): $className !!!")
+                Log.w(TAG, "!!! ATTEMPTING TO ACCESS DANGEROUS SETTINGS - ACTIVATING LOCKDOWN !!!")
+                prefs.setPermissionLockdown()
+                lastBlockedPackage = packageName
+                lastBlockTime = System.currentTimeMillis()
+                showBlockerOverlay(packageName, true)
+                return
+            }
         }
 
         // Check if service/blocking is enabled (only for regular apps, not settings)
@@ -332,6 +370,7 @@ class AppBlockerAccessibilityService : AccessibilityService() {
     private fun isSystemPackage(packageName: String): Boolean {
         // Only ignore launchers and system UI
         return IGNORED_PACKAGES.contains(packageName) ||
+               detectedLaunchers.contains(packageName) ||
                packageName.contains("launcher") ||
                packageName.contains("home")
     }
@@ -350,6 +389,23 @@ class AppBlockerAccessibilityService : AccessibilityService() {
 
     private fun isDangerousSettingsSection(className: String): Boolean {
         val lowerClassName = className.lowercase()
+
+        // Si el estudiante NO tiene sesión activa, permitir acceso a app info/uninstall
+        if (!prefs.isStudentLoggedIn()) {
+            Log.d(TAG, "Student not logged in - allowing access to app management sections")
+            // Solo bloquear secciones de permisos críticas, pero permitir desinstalar
+            return lowerClassName.contains("accessibilitysettings") ||
+                   lowerClassName.contains("accessibility") && !lowerClassName.contains("fragment") ||
+                   lowerClassName.contains("deviceadmin") ||
+                   lowerClassName.contains("permissionmanager") ||
+                   lowerClassName.contains("appops") ||
+                   lowerClassName.contains("usageaccess") ||
+                   lowerClassName.contains("specialaccess") ||
+                   lowerClassName.contains("displayoverotherapp") ||
+                   lowerClassName.contains("drawoverlay")
+        }
+
+        // Si el estudiante TIENE sesión activa, bloquear todo incluyendo desinstalación
         // Block these specific sections within Settings:
         // - Accessibility settings (to prevent disabling our service)
         // - Device admin settings (to prevent removing admin)
@@ -370,10 +426,99 @@ class AppBlockerAccessibilityService : AccessibilityService() {
                lowerClassName.contains("appinfo") ||
                lowerClassName.contains("applicationinfo") ||
                lowerClassName.contains("manageapplications") ||
-               lowerClassName.contains("allapps")
+               lowerClassName.contains("allapps") ||
+               lowerClassName.contains("uninstall")
     }
 
-    private fun showBlockerOverlay(blockedPackage: String) {
+    /**
+     * Detecta si el usuario está intentando desinstalar POCU específicamente
+     * Esto incluye:
+     * - Diálogo de desinstalación del sistema
+     * - Pantalla de información de la app POCU
+     * - Cualquier actividad relacionada con desinstalar "com.example.pocu"
+     */
+    private fun isAttemptingToUninstallPocu(event: AccessibilityEvent, packageName: String, className: String): Boolean {
+        val lowerClassName = className.lowercase()
+        val lowerPackageName = packageName.lowercase()
+
+        // Detectar Package Installer con diálogo de desinstalación
+        if (lowerPackageName.contains("packageinstaller") ||
+            lowerPackageName.contains("packageuninstaller")) {
+            // Intentar obtener texto del evento para ver si menciona POCU
+            val eventText = getEventTextContent(event)
+            if (eventText.contains("pocu", ignoreCase = true) ||
+                eventText.contains("com.example.pocu", ignoreCase = true)) {
+                Log.d(TAG, "Detected POCU uninstall dialog in package installer")
+                return true
+            }
+            // Si no podemos verificar el texto, asumimos que es intento de desinstalar POCU
+            // porque el estudiante ya está en el instalador de paquetes
+            Log.d(TAG, "Package installer detected - assuming POCU uninstall attempt")
+            return true
+        }
+
+        // Detectar pantalla de información de app para POCU
+        if (lowerClassName.contains("appinfo") ||
+            lowerClassName.contains("installedappdetails") ||
+            lowerClassName.contains("applicationinfo")) {
+            // Intentar detectar si es la info de POCU
+            val eventText = getEventTextContent(event)
+            if (eventText.contains("pocu", ignoreCase = true) ||
+                eventText.contains("com.example.pocu", ignoreCase = true)) {
+                Log.d(TAG, "Detected POCU app info screen")
+                return true
+            }
+        }
+
+        // Detectar diálogo de confirmación de desinstalación
+        if (lowerClassName.contains("uninstallactivity") ||
+            lowerClassName.contains("uninstalldialog") ||
+            lowerClassName.contains("deleteconfirmation")) {
+            val eventText = getEventTextContent(event)
+            if (eventText.contains("pocu", ignoreCase = true) ||
+                eventText.contains("com.example.pocu", ignoreCase = true)) {
+                Log.d(TAG, "Detected POCU uninstall confirmation dialog")
+                return true
+            }
+        }
+
+        return false
+    }
+
+    /**
+     * Obtiene el texto contenido en el evento de accesibilidad
+     */
+    private fun getEventTextContent(event: AccessibilityEvent): String {
+        val textBuilder = StringBuilder()
+
+        // Obtener texto del evento
+        event.text.forEach { charSeq ->
+            textBuilder.append(charSeq.toString()).append(" ")
+        }
+
+        // Obtener descripción del contenido
+        event.contentDescription?.let {
+            textBuilder.append(it.toString()).append(" ")
+        }
+
+        // Intentar obtener texto de la fuente
+        try {
+            event.source?.let { source ->
+                source.text?.let {
+                    textBuilder.append(it.toString()).append(" ")
+                }
+                source.contentDescription?.let {
+                    textBuilder.append(it.toString()).append(" ")
+                }
+            }
+        } catch (e: Exception) {
+            // Ignorar errores al acceder a la fuente
+        }
+
+        return textBuilder.toString()
+    }
+
+    private fun showBlockerOverlay(blockedPackage: String, isPermissionBlock: Boolean = false) {
         try {
             val intent = Intent(this, BlockerOverlayActivity::class.java).apply {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -381,9 +526,10 @@ class AppBlockerAccessibilityService : AccessibilityService() {
                 addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
                 putExtra(BlockerOverlayActivity.EXTRA_BLOCKED_PACKAGE, blockedPackage)
+                putExtra(BlockerOverlayActivity.EXTRA_IS_PERMISSION_BLOCK, isPermissionBlock)
             }
             startActivity(intent)
-            Log.d(TAG, "Blocker overlay launched for: $blockedPackage")
+            Log.d(TAG, "Blocker overlay launched for: $blockedPackage (permissionBlock: $isPermissionBlock)")
         } catch (e: Exception) {
             Log.e(TAG, "Error launching blocker overlay", e)
         }
@@ -391,6 +537,7 @@ class AppBlockerAccessibilityService : AccessibilityService() {
 
     private fun isAllowedInLockdown(packageName: String): Boolean {
         return LOCKDOWN_ALLOWED_PACKAGES.contains(packageName) ||
+               detectedLaunchers.contains(packageName) ||
                packageName.contains("launcher") ||
                packageName.contains("home") ||
                packageName.contains("inputmethod") ||

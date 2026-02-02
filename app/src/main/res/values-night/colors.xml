@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colores para tema oscuro (Dark Mode) -->
+
+    <!-- Azul principal para modo oscuro - MÁS OSCURO -->
+    <color name="primary_blue">#0D47A1</color>
+    <color name="primary_blue_title">#0A3D91</color>
+    <color name="primary_blue_light">#0D47A1</color>
+
+    <!-- Verde OK para modo oscuro -->
+    <color name="success_green">#66BB6A</color>
+    <color name="success_green_dark">#4CAF50</color>
+    <color name="success_green_light">#0D3817</color>
+
+    <!-- Grises para modo oscuro - MEJORADOS PARA CONTRASTE -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0BEC5</color>
+    <color name="text_tertiary">#90A4AE</color>
+
+    <!-- Fondos para modo oscuro -->
+    <color name="app_background">#121212</color>
+
+    <!-- Colores específicos para estado actual - VISIBLES EN MODO OSCURO -->
+    <color name="state_title_color">#66BB6A</color>
+    <color name="state_time_color">#81C784</color>
+
+    <!-- Color para nombre del estudiante - MÁS CLARO EN MODO OSCURO -->
+    <color name="student_name_color">#64B5F6</color>
+
+    <!-- Colores legados para compatibilidad -->
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Dark mode colors -->
+    <color name="purple_dark_primary">#FF1A0033</color>
+    <color name="purple_dark_variant">#FF2D0052</color>
+    <color name="purple_dark_surface">#FF120024</color>
+
+    <!-- Color de fondo del login -->
+    <color name="login_background">#121212</color>
+</resources>

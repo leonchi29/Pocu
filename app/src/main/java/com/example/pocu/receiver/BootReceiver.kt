@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.example.pocu.data.AppPreferences
 import com.example.pocu.service.AppBlockerService
+import com.example.pocu.service.LocationTrackingService
 import com.example.pocu.service.PermissionMonitorService
 
 class BootReceiver : BroadcastReceiver() {
@@ -19,6 +20,10 @@ class BootReceiver : BroadcastReceiver() {
                 // Start permission monitor to detect permission revocation
                 if (prefs.werePermissionsGranted()) {
                     PermissionMonitorService.start(context)
+                }
+                // Start location tracking during school hours
+                if (prefs.isStudentRegistered() && LocationTrackingService.isLocationPermissionGranted(context)) {
+                    LocationTrackingService.start(context)
                 }
             }
         }

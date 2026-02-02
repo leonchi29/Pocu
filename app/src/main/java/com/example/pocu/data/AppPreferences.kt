@@ -2,6 +2,7 @@ package com.example.pocu.data
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import com.google.gson.Gson
@@ -51,6 +52,9 @@ class AppPreferences(context: Context) {
         private const val KEY_USAGE_STATS_GRANTED = "usage_stats_granted"
         private const val KEY_LOCKDOWN_MODE = "lockdown_mode"
         private const val KEY_LOCKDOWN_REASON = "lockdown_reason"
+        private const val KEY_LOCKDOWN_UNTIL = "lockdown_until"
+        private const val KEY_LOCKDOWN_PENALTY_COUNT = "lockdown_penalty_count"
+        private const val KEY_LAST_PENALTY_TIME = "last_penalty_time"
 
         // Web sync keys
         private const val KEY_WEB_SYNC_ENABLED = "web_sync_enabled"
@@ -61,6 +65,7 @@ class AppPreferences(context: Context) {
 
         // Student keys
         private const val KEY_STUDENT_ID = "student_id"
+        private const val KEY_STUDENT_NUMERIC_ID = "student_numeric_id"
         private const val KEY_STUDENT_NAME = "student_name"
         private const val KEY_STUDENT_RUT = "student_rut"
         private const val KEY_STUDENT_EMAIL = "student_email"
@@ -187,7 +192,10 @@ class AppPreferences(context: Context) {
     // Returns true if we're in a CLASS TIME (blocked) and NOT in a RECESS TIME (allowed)
     fun isCurrentlyBlocked(): Boolean {
         val schedules = getSchedules().filter { it.enabled }
-        if (schedules.isEmpty()) return false
+        if (schedules.isEmpty()) {
+            Log.d("AppPreferences", "No schedules found")
+            return false
+        }
 
         val calendar = Calendar.getInstance()
         val currentDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
@@ -195,34 +203,45 @@ class AppPreferences(context: Context) {
         val currentMinute = calendar.get(Calendar.MINUTE)
         val currentTimeInMinutes = currentHour * 60 + currentMinute
 
+        Log.d("AppPreferences", "Current time: $currentHour:$currentMinute ($currentTimeInMinutes mins), Day: $currentDayOfWeek")
+
         var inClassTime = false
         var inRecessTime = false
 
         for (schedule in schedules) {
-            if (!schedule.daysOfWeek.contains(currentDayOfWeek)) continue
+            if (!schedule.daysOfWeek.contains(currentDayOfWeek)) {
+                Log.d("AppPreferences", "Schedule '${schedule.name}' not for today (daysOfWeek: ${schedule.daysOfWeek})")
+                continue
+            }
 
             val startTimeInMinutes = schedule.startHour * 60 + schedule.startMinute
             val endTimeInMinutes = schedule.endHour * 60 + schedule.endMinute
 
             val isInThisSchedule = if (startTimeInMinutes <= endTimeInMinutes) {
-                currentTimeInMinutes in startTimeInMinutes until endTimeInMinutes
+                currentTimeInMinutes in startTimeInMinutes..endTimeInMinutes  // Usar .. para inclusive
             } else {
                 // Overnight: from start to midnight OR from midnight to end
                 currentTimeInMinutes >= startTimeInMinutes || currentTimeInMinutes < endTimeInMinutes
             }
 
+            Log.d("AppPreferences", "Schedule '${schedule.name}': ${schedule.startHour}:${schedule.startMinute}-${schedule.endHour}:${schedule.endMinute} (${startTimeInMinutes}-${endTimeInMinutes}), isInThisSchedule: $isInThisSchedule, isClassTime: ${schedule.isClassTime}")
+
             if (isInThisSchedule) {
                 if (schedule.isClassTime) {
                     inClassTime = true
+                    Log.d("AppPreferences", "Currently IN CLASS TIME")
                 } else {
                     inRecessTime = true
+                    Log.d("AppPreferences", "Currently IN RECESS TIME")
                 }
             }
         }
 
         // Block if in class time AND not in recess time
         // Recess time takes priority (allows using apps during breaks within class hours)
-        return inClassTime && !inRecessTime
+        val shouldBlock = inClassTime && !inRecessTime
+        Log.d("AppPreferences", "isCurrentlyBlocked: $shouldBlock (inClassTime: $inClassTime, inRecessTime: $inRecessTime)")
+        return shouldBlock
     }
 
     // Get next unblock time (end of current class time or start of next recess)
@@ -340,6 +359,91 @@ class AppPreferences(context: Context) {
             .apply()
     }
 
+    // Bloqueo temporal por intento de configuración peligrosa
+    // El tiempo se acumula: 20 seg, 40 seg, 60 seg, etc.
+    // Razón específica: "No puedes modificar los permisos de la app por reglamento escolar"
+    fun setTemporaryLockdown(reason: String) {
+        val now = System.currentTimeMillis()
+        val lastPenaltyTime = prefs.getLong(KEY_LAST_PENALTY_TIME, 0)
+
+        // Si han pasado más de 30 minutos desde la última penalización, reiniciar contador
+        val thirtyMinutes = 30 * 60 * 1000L
+        var penaltyCount = if (now - lastPenaltyTime > thirtyMinutes) {
+            1
+        } else {
+            prefs.getInt(KEY_LOCKDOWN_PENALTY_COUNT, 0) + 1
+        }
+
+        // Calcular tiempo de bloqueo: 20 segundos * penaltyCount (máximo 5 minutos = 300 segundos)
+        val lockdownSeconds = (20 * penaltyCount).coerceAtMost(300)
+        val lockdownUntil = now + (lockdownSeconds * 1000L)
+
+        prefs.edit()
+            .putBoolean(KEY_LOCKDOWN_MODE, true)
+            .putString(KEY_LOCKDOWN_REASON, reason)
+            .putLong(KEY_LOCKDOWN_UNTIL, lockdownUntil)
+            .putInt(KEY_LOCKDOWN_PENALTY_COUNT, penaltyCount)
+            .putLong(KEY_LAST_PENALTY_TIME, now)
+            .apply()
+
+        Log.d("AppPreferences", "Temporary lockdown set for $lockdownSeconds seconds (penalty #$penaltyCount)")
+    }
+
+    /**
+     * Bloqueo específico por intento de modificar permisos de la app
+     * 20 segundos base + 20 segundos adicionales por cada intento
+     */
+    fun setPermissionLockdown() {
+        val reason = "No puedes modificar los permisos de la app por reglamento escolar"
+        setTemporaryLockdown(reason)
+    }
+
+    fun getLockdownUntil(): Long {
+        return prefs.getLong(KEY_LOCKDOWN_UNTIL, 0)
+    }
+
+    fun getRemainingLockdownMinutes(): Int {
+        val lockdownUntil = getLockdownUntil()
+        if (lockdownUntil == 0L) return 0
+
+        val remaining = lockdownUntil - System.currentTimeMillis()
+        return if (remaining > 0) {
+            (remaining / 60000).toInt() + 1 // Redondear hacia arriba
+        } else {
+            0
+        }
+    }
+
+    fun getRemainingLockdownSeconds(): Int {
+        val lockdownUntil = getLockdownUntil()
+        if (lockdownUntil == 0L) return 0
+
+        val remaining = lockdownUntil - System.currentTimeMillis()
+        return if (remaining > 0) {
+            (remaining / 1000).toInt()
+        } else {
+            0
+        }
+    }
+
+    fun isTemporaryLockdownExpired(): Boolean {
+        val lockdownUntil = getLockdownUntil()
+        if (lockdownUntil == 0L) return true
+        return System.currentTimeMillis() >= lockdownUntil
+    }
+
+    fun clearTemporaryLockdown() {
+        prefs.edit()
+            .putBoolean(KEY_LOCKDOWN_MODE, false)
+            .putString(KEY_LOCKDOWN_REASON, "")
+            .putLong(KEY_LOCKDOWN_UNTIL, 0)
+            .apply()
+    }
+
+    fun getPenaltyCount(): Int {
+        return prefs.getInt(KEY_LOCKDOWN_PENALTY_COUNT, 0)
+    }
+
     // ==================== WEB SYNC ====================
 
     fun setWebSyncEnabled(enabled: Boolean) {
@@ -414,6 +518,13 @@ class AppPreferences(context: Context) {
     fun getSchoolName(): String? = securePrefs.getString(KEY_SCHOOL_NAME, null)
     fun getStudentCourse(): String? = securePrefs.getString(KEY_STUDENT_COURSE, null)
 
+    // ID numérico del alumno (para usar con la API)
+    fun saveStudentNumericId(id: Int) {
+        securePrefs.edit().putInt(KEY_STUDENT_NUMERIC_ID, id).apply()
+    }
+
+    fun getStudentNumericId(): Int = securePrefs.getInt(KEY_STUDENT_NUMERIC_ID, -1)
+
     fun saveStudentEmail(email: String) {
         securePrefs.edit().putString(KEY_STUDENT_EMAIL, email).apply()
     }
@@ -432,6 +543,15 @@ class AppPreferences(context: Context) {
 
     fun isStudentRegistered(): Boolean {
         return prefs.getBoolean(KEY_STUDENT_REGISTERED, false)
+    }
+
+    /**
+     * Verifica si hay un estudiante con sesión activa
+     * @return true si el estudiante tiene sesión activa (RUT guardado)
+     */
+    fun isStudentLoggedIn(): Boolean {
+        val studentRut = getStudentRut()
+        return !studentRut.isNullOrEmpty()
     }
 
     fun saveSchedulesFromServer(schedules: List<Map<String, Any>>) {

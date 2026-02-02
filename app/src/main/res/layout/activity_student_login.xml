@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fillViewport="true"
-    android:background="@color/white">
+    android:background="@color/login_background">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -15,9 +15,10 @@
 
         <!-- Logo o ícono -->
         <ImageView
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:src="@mipmap/ic_launcher"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:src="@drawable/pocu_logo_large"
+            android:scaleType="fitCenter"
             android:layout_marginTop="48dp"
             android:contentDescription="Logo" />
 
@@ -35,7 +36,7 @@
             android:layout_height="wrap_content"
             android:text="Control Parental"
             android:textSize="14sp"
-            android:alpha="0.7"
+            android:textColor="@color/text_secondary"
             android:layout_marginBottom="48dp" />
 
         <!-- Formulario de login -->

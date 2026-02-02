@@ -87,5 +87,24 @@ interface PocuApiService {
     suspend fun registerStudentDevice(
         @Body request: DeviceRegistrationRequest
     ): Response<DeviceRegistrationResponse>
+
+    /**
+     * Enviar ubicación GPS del dispositivo durante horario escolar
+     * Endpoint: https://pocu-api.azurewebsites.net/api/v1/dispositivos/ubicacion
+     */
+    @POST("api/v1/dispositivos/ubicacion")
+    suspend fun sendDeviceLocation(
+        @Body request: LocationUpdateRequest
+    ): Response<LocationUpdateResponse>
+
+    /**
+     * Registrar un nuevo dispositivo asociado a un estudiante
+     * Se llama cuando el estudiante inicia sesión por primera vez en un dispositivo
+     * Endpoint: https://pocu-api.azurewebsites.net/api/v1/dispositivos/add
+     */
+    @POST("api/v1/dispositivos/add")
+    suspend fun addDevice(
+        @Body request: AddDeviceRequest
+    ): Response<AddDeviceResponse>
 }
 

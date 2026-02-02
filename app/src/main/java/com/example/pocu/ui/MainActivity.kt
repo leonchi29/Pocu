@@ -1,10 +1,10 @@
 package com.example.pocu.ui
 
+import android.Manifest
 import android.app.AppOpsManager
-import android.app.admin.DevicePolicyManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -21,12 +21,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import com.example.pocu.R
-import com.example.pocu.admin.AppDeviceAdminReceiver
 import com.example.pocu.data.AppPreferences
 import com.example.pocu.data.Schedule
 import com.example.pocu.databinding.ActivityMainBinding
 import com.example.pocu.service.AppBlockerAccessibilityService
 import com.example.pocu.service.AppBlockerService
+import com.example.pocu.service.LocationTrackingService
 import com.example.pocu.service.PermissionMonitorService
 import java.text.SimpleDateFormat
 import java.util.*
@@ -35,8 +35,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var prefs: AppPreferences
-    private lateinit var devicePolicyManager: DevicePolicyManager
-    private lateinit var adminComponent: ComponentName
 
     // Handler para actualizar el reloj
     private val clockHandler = Handler(Looper.getMainLooper())
@@ -47,32 +45,68 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private val deviceAdminLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
+
+    // Launcher para permisos de ubicación
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+
+        if (fineLocationGranted || coarseLocationGranted) {
+            Toast.makeText(this, "✅ Permiso de ubicación concedido", Toast.LENGTH_SHORT).show()
+            // Si tiene permiso y está registrado, iniciar servicio de ubicación
+            if (prefs.isStudentRegistered()) {
+                // Solicitar permiso de ubicación en segundo plano si es Android 10+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    requestBackgroundLocationPermission()
+                } else {
+                    LocationTrackingService.start(this)
+                }
+            }
+        } else {
+            Toast.makeText(this, "❌ Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
+        }
+        updatePermissionStatus()
+    }
+
+    // Launcher para permiso de ubicación en segundo plano (Android 10+)
+    private val backgroundLocationLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            Toast.makeText(this, "✅ Ubicación en segundo plano activada", Toast.LENGTH_SHORT).show()
+            if (prefs.isStudentRegistered()) {
+                LocationTrackingService.start(this)
+            }
+        }
         updatePermissionStatus()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        try {
+            binding = ActivityMainBinding.inflate(layoutInflater)
+            setContentView(binding.root)
 
-        prefs = AppPreferences(this)
-        devicePolicyManager = getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
-        adminComponent = ComponentName(this, AppDeviceAdminReceiver::class.java)
+            prefs = AppPreferences(this)
 
-        // Configurar toolbar con menú
-        setupToolbar()
+            // Configurar toolbar con menú
+            setupToolbar()
 
-        // Check if first run - require PIN setup
-        if (prefs.isFirstRun() || !prefs.hasPin()) {
-            startActivity(Intent(this, PinActivity::class.java).apply {
-                putExtra(PinActivity.EXTRA_MODE, PinActivity.MODE_CREATE)
-            })
+            // Check if first run - require PIN setup
+            if (prefs.isFirstRun() || !prefs.hasPin()) {
+                startActivity(Intent(this, PinActivity::class.java).apply {
+                    putExtra(PinActivity.EXTRA_MODE, PinActivity.MODE_CREATE)
+                })
+            }
+
+            setupClickListeners()
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error en onCreate: ${e.message}", e)
+            Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+            finish()
         }
-
-        setupClickListeners()
     }
 
     private fun setupToolbar() {
@@ -141,20 +175,27 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Check if we can disable lockdown mode (all permissions restored)
-        checkAndDisableLockdown()
-        updateUI()
-        setupStudentCard()
 
-        // Iniciar reloj
-        clockHandler.post(clockRunnable)
+        try {
+            // Check if we can disable lockdown mode (all permissions restored)
+            checkAndDisableLockdown()
+            updateUI()
+            setupStudentCard()
+
+            // Iniciar reloj
+            clockHandler.post(clockRunnable)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error en onResume: ${e.message}", e)
+        }
     }
+
 
     override fun onPause() {
         super.onPause()
         // Detener reloj para ahorrar batería
         clockHandler.removeCallbacks(clockRunnable)
     }
+
 
     private fun setupStudentCard() {
         val studentName = prefs.getStudentName()
@@ -305,26 +346,33 @@ class MainActivity : AppCompatActivity() {
 
     private fun checkAndDisableLockdown() {
         if (prefs.isLockdownMode()) {
-            val hasDeviceAdmin = devicePolicyManager.isAdminActive(adminComponent)
+            // Si es un bloqueo temporal, verificar si expiró
+            if (prefs.getLockdownUntil() > 0) {
+                if (prefs.isTemporaryLockdownExpired()) {
+                    prefs.clearTemporaryLockdown()
+                }
+                // No hacer nada más si es bloqueo temporal (dejar que expire)
+                return
+            }
+
+            // Solo para bloqueo permanente (permisos revocados)
             val hasAccessibility = isAccessibilityServiceEnabled()
             val hasOverlay = hasOverlayPermission()
             val hasUsageStats = hasUsageStatsPermission()
 
-            val wasDeviceAdmin = prefs.wasDeviceAdminGranted()
             val wasAccessibility = prefs.wasAccessibilityGranted()
             val wasOverlay = prefs.wasOverlayGranted()
             val wasUsageStats = prefs.wasUsageStatsGranted()
 
             // Check if all previously granted permissions are restored
-            val adminOk = !wasDeviceAdmin || hasDeviceAdmin
             val accessibilityOk = !wasAccessibility || hasAccessibility
             val overlayOk = !wasOverlay || hasOverlay
             val usageOk = !wasUsageStats || hasUsageStats
 
-            if (adminOk && accessibilityOk && overlayOk && usageOk) {
+            if (accessibilityOk && overlayOk && usageOk) {
                 prefs.clearLockdownMode()
                 // Update saved permissions state
-                prefs.saveAllPermissionsState(hasDeviceAdmin, hasAccessibility, hasOverlay, hasUsageStats)
+                prefs.saveAllPermissionsState(false, hasAccessibility, hasOverlay, hasUsageStats)
                 Toast.makeText(this, "✅ Permisos restaurados - Dispositivo desbloqueado", Toast.LENGTH_LONG).show()
             }
         }
@@ -369,23 +417,15 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        binding.btnDeviceAdmin.setOnClickListener {
-            if (!devicePolicyManager.isAdminActive(adminComponent)) {
-                showPermissionDialog(
-                    title = getString(R.string.permission_admin_title),
-                    message = getString(R.string.permission_admin_message),
-                    onConfirm = {
-                        val intent = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
-                            putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
-                            putExtra(
-                                DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                                getString(R.string.device_admin_description)
-                            )
-                        }
-                        deviceAdminLauncher.launch(intent)
-                    }
-                )
-            }
+
+        binding.btnLocationPermission.setOnClickListener {
+            showPermissionDialog(
+                title = getString(R.string.permission_location_title),
+                message = getString(R.string.permission_location_message),
+                onConfirm = {
+                    requestLocationPermission()
+                }
+            )
         }
 
         // Settings buttons removed - student mode doesn't need configuration
@@ -401,22 +441,23 @@ class MainActivity : AppCompatActivity() {
         val hasUsageAccess = hasUsageStatsPermission()
         val hasOverlay = hasOverlayPermission()
         val hasAccessibility = isAccessibilityServiceEnabled()
-        val hasDeviceAdmin = devicePolicyManager.isAdminActive(adminComponent)
+        val hasLocation = hasLocationPermission()
+
 
         updatePermissionButton(binding.btnUsageAccess, hasUsageAccess)
         updatePermissionButton(binding.btnOverlayPermission, hasOverlay)
         updatePermissionButton(binding.btnAccessibility, hasAccessibility)
-        updatePermissionButton(binding.btnDeviceAdmin, hasDeviceAdmin)
+        updatePermissionButton(binding.btnLocationPermission, hasLocation)
 
         // Hide permissions card if all granted
-        val allGranted = hasUsageAccess && hasOverlay && hasAccessibility && hasDeviceAdmin
+        val allGranted = hasUsageAccess && hasOverlay && hasAccessibility && hasLocation
         binding.cardPermissions.visibility = if (allGranted) View.GONE else View.VISIBLE
 
         // Save permission state when all permissions are granted
         // This is used to detect if permissions are revoked later
         if (allGranted) {
             prefs.saveAllPermissionsState(
-                deviceAdmin = hasDeviceAdmin,
+                deviceAdmin = false,
                 accessibility = hasAccessibility,
                 overlay = hasOverlay,
                 usageStats = hasUsageAccess
@@ -474,6 +515,53 @@ class MainActivity : AppCompatActivity() {
             Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
         ) ?: return false
         return enabledServices.contains(service)
+    }
+
+    private fun hasLocationPermission(): Boolean {
+        val fineLocation = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        val coarseLocation = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        // En Android 10+ también necesitamos permiso de ubicación en segundo plano
+        val backgroundLocation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContextCompat.checkSelfPermission(
+                this, Manifest.permission.ACCESS_BACKGROUND_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true // No se necesita en Android 9 y anteriores
+        }
+
+        return (fineLocation || coarseLocation) && backgroundLocation
+    }
+
+    private fun requestLocationPermission() {
+        // Primero solicitar permisos de ubicación básicos
+        locationPermissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
+    }
+
+    private fun requestBackgroundLocationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            AlertDialog.Builder(this)
+                .setTitle("Ubicación en segundo plano")
+                .setMessage("Para rastrear tu ubicación durante el horario escolar, necesitamos el permiso de ubicación \"Todo el tiempo\".\n\nEn la siguiente pantalla, selecciona \"Permitir todo el tiempo\".")
+                .setPositiveButton("Continuar") { dialog, _ ->
+                    dialog.dismiss()
+                    backgroundLocationLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+                }
+                .setNegativeButton(getString(R.string.cancel)) { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
+        }
     }
 
     private fun showPermissionDialog(title: String, message: String, onConfirm: () -> Unit) {
@@ -552,6 +640,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val ACTION_DISABLE_SERVICE = "disable_service"
         const val ACTION_LOGOUT = "logout"
+        const val REQUEST_CODE_ENABLE_ADMIN = 1001
     }
 }
 

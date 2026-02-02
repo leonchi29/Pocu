@@ -65,10 +65,11 @@ class StudentFullInfoResponseDeserializer : JsonDeserializer<StudentFullInfoResp
 
     /**
      * 📝 Parsear información general del alumno
-     * @param obj JSON object con nombre, apellido, curso, colegio
+     * @param obj JSON object con idAlumno, nombre, apellido, curso, colegio
      */
     private fun parseGeneralInfo(obj: JsonObject?): StudentGeneralInfo {
         return StudentGeneralInfo(
+            id = obj?.get("idAlumno")?.asInt ?: 0,
             firstName = obj?.get("nombre")?.asString ?: "",
             lastName = obj?.get("apellido")?.asString ?: "",
             courseLevel = obj?.get("curso")?.asString ?: "",

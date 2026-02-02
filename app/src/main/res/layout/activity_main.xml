@@ -3,14 +3,15 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="@color/app_background">
 
     <!-- Toolbar con menú de 3 puntitos -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        android:background="@color/primary_blue"
         app:title="Pocu"
         app:titleTextColor="@android:color/white"
         app:menu="@menu/menu_main" />
@@ -24,275 +25,207 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:padding="16dp"
+            android:fontFamily="system-ui">
 
-        <!-- Student Welcome Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardStudent"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardElevation="4dp"
-            app:cardCornerRadius="12dp"
-            app:cardBackgroundColor="#E8F5E9">
-
-            <LinearLayout
+            <!-- 1) Cápsula / Card Saludo (Header) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardStudent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:layout_marginBottom="16dp"
+                app:cardElevation="0dp"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="@color/primary_blue_light">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="👋"
-                        android:textSize="32sp" />
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
                     <LinearLayout
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical"
-                        android:layout_marginStart="12dp">
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
 
                         <TextView
-                            android:id="@+id/tvStudentName"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Hola, Estudiante"
-                            android:textSize="18sp"
-                            android:textStyle="bold"
-                            android:textColor="#2E7D32" />
+                            android:text="👋"
+                            android:textSize="32sp" />
 
-                        <TextView
-                            android:id="@+id/tvSchoolName"
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:text="Colegio Demo"
-                            android:textSize="14sp"
-                            android:alpha="0.7" />
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="12dp">
 
+                            <TextView
+                                android:id="@+id/tvStudentName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Hola, Juana Pérez"
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/student_name_color"
+                                android:fontFamily="system-ui" />
+
+                            <TextView
+                                android:id="@+id/tvSchoolName"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Pumahue"
+                                android:textSize="13sp"
+                                android:textColor="@color/text_secondary"
+                                android:fontFamily="system-ui" />
+
+                            <TextView
+                                android:id="@+id/tvStudentCourse"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="1B"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                android:textColor="@color/text_primary"
+                                android:fontFamily="system-ui" />
+
+                        </LinearLayout>
                     </LinearLayout>
+
                 </LinearLayout>
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnViewSchedules"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="📅 Ver mis horarios"
-                    android:layout_marginTop="12dp"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+            </com.google.android.material.card.MaterialCardView>
 
-            </LinearLayout>
+            <!-- 2) Botón principal "VER MIS HORARIOS" -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnViewSchedules"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="📅 VER MIS HORARIOS"
+                android:layout_marginBottom="16dp"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:backgroundTint="@color/primary_blue"
+                android:textColor="@android:color/white"
+                app:cornerRadius="14dp"
+                style="@style/Widget.MaterialComponents.Button" />
 
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Status Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardElevation="4dp"
-            app:cardCornerRadius="12dp">
-
-            <LinearLayout
+            <!-- 3) Cápsula / Card "Estado actual" -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardStatus"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:gravity="center">
+                android:layout_marginBottom="16dp"
+                app:cardElevation="0dp"
+                app:cardCornerRadius="16dp"
+                app:cardBackgroundColor="@color/success_green_light">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="8dp">
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-                    <!-- Puntito verde indicador de servicio activo -->
-                    <View
-                        android:id="@+id/serviceIndicator"
-                        android:layout_width="12dp"
-                        android:layout_height="12dp"
-                        android:background="@drawable/service_indicator_dot"
-                        android:layout_marginEnd="8dp" />
-
+                    <!-- Título "ESTADO ACTUAL" -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/blocking_status"
-                        android:textSize="14sp"
-                        android:textColor="?android:textColorSecondary" />
+                        android:text="ESTADO ACTUAL"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/state_title_color"
+                        android:layout_marginBottom="8dp"
+                        android:fontFamily="system-ui" />
+
+                    <!-- Reloj (hora grande) -->
+                    <TextView
+                        android:id="@+id/tvClock"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="15:05:31"
+                        android:textSize="36sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/state_time_color"
+                        android:layout_marginBottom="8dp"
+                        android:fontFamily="monospace" />
+
+                    <!-- Subtexto "En clase · Apps bloqueadas…" -->
+                    <TextView
+                        android:id="@+id/tvCurrentStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="En clase · Apps bloqueadas para concentrarte 🔒"
+                        android:textSize="13sp"
+                        android:textColor="@color/text_tertiary"
+                        android:fontFamily="system-ui" />
 
                 </LinearLayout>
 
-                <!-- Información del curso -->
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Permissions Card (oculto por defecto) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardPermissions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardElevation="0dp"
+                app:cardCornerRadius="16dp"
+                android:visibility="gone">
+
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="8dp">
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📚 "
-                        android:textSize="16sp" />
+                        android:text="@string/permissions_required"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp" />
 
-                    <TextView
-                        android:id="@+id/tvStudentCourse"
-                        android:layout_width="wrap_content"
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnUsageAccess"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Curso: -"
-                        android:textSize="14sp"
-                        android:textColor="?android:textColorPrimary" />
+                        android:text="@string/grant_usage_access"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnOverlayPermission"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/grant_overlay_permission"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnAccessibility"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/enable_accessibility"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnLocationPermission"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/grant_location_permission"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
                 </LinearLayout>
 
+            </com.google.android.material.card.MaterialCardView>
 
-</LinearLayout>
+        </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Permissions Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardPermissions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardElevation="4dp"
-            app:cardCornerRadius="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/permissions_required"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="12dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnUsageAccess"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/grant_usage_access"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnOverlayPermission"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/grant_overlay_permission"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnAccessibility"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/enable_accessibility"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnDeviceAdmin"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/enable_device_admin"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-        <!-- Status Decoration Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:cardElevation="4dp"
-            app:cardCornerRadius="12dp"
-            app:cardBackgroundColor="@color/teal_700">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp"
-                android:gravity="center">
-
-                <!-- Separador decorativo superior -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="╔════════════════════════════════════╗"
-                    android:textColor="@android:color/white"
-                    android:textSize="11sp"
-                    android:fontFamily="monospace"
-                    android:layout_marginBottom="8dp" />
-
-                <!-- Estado actual -->
-                <TextView
-                    android:id="@+id/tvStatusTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="⏰ ESTADO ACTUAL"
-                    android:textColor="@android:color/white"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:layout_marginBottom="12dp" />
-
-                <!-- Reloj (solo visible en recreo) -->
-                <TextView
-                    android:id="@+id/tvClock"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🕐 00:00:00"
-                    android:textColor="@android:color/white"
-                    android:textSize="32sp"
-                    android:textStyle="bold"
-                    android:fontFamily="monospace"
-                    android:layout_marginBottom="8dp"
-                    android:visibility="gone" />
-
-                <!-- Información del estado -->
-                <TextView
-                    android:id="@+id/tvCurrentStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="En clase - Aplicación bloqueada 🔒"
-                    android:textColor="@android:color/white"
-                    android:textSize="14sp"
-                    android:layout_marginBottom="12dp" />
-
-                <!-- Separador decorativo inferior -->
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="╚════════════════════════════════════╝"
-                    android:textColor="@android:color/white"
-                    android:textSize="11sp"
-                    android:fontFamily="monospace" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-    </LinearLayout>
-
-</ScrollView>
+    </ScrollView>
 
 </LinearLayout>
 

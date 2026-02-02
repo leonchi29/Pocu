@@ -63,6 +63,12 @@ class AppBlockerService : Service() {
         createNotificationChannel()
         startForeground(NOTIFICATION_ID, createNotification())
         startMonitoring()
+
+        // Start location tracking service during school hours
+        if (prefs.isStudentRegistered() && LocationTrackingService.isLocationPermissionGranted(this)) {
+            LocationTrackingService.start(this)
+        }
+
         return START_STICKY
     }
 

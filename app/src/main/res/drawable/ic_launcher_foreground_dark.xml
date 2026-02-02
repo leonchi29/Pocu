@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Logo Pocu - Letra P estilizada para modo oscuro -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Fondo circular verde más oscuro -->
+    <path
+        android:pathData="M54,54 m-48,0 a48,48 0 1,0 96,0 a48,48 0 1,0 -96,0"
+        android:fillColor="#66BB6A" />
+
+    <!-- P de Pocu - barra vertical -->
+    <path
+        android:pathData="M42,28 L42,80"
+        android:strokeWidth="6"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+
+    <!-- P de Pocu - cabeza (óvalo superior) -->
+    <path
+        android:pathData="M42,28 Q42,28 60,28 Q70,28 70,38 Q70,48 60,48 Q42,48 42,48"
+        android:strokeWidth="6"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent" />
+
+</vector>
+
+
+
+
+
+

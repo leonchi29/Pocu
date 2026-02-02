@@ -57,6 +57,9 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.coroutines.android)
 
+    // Google Play Services - Location para rastreo GPS
+    implementation("com.google.android.gms:play-services-location:21.1.0")
+
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

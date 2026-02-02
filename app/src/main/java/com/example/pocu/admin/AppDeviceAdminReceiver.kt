@@ -6,7 +6,6 @@ import android.content.Intent
 import android.util.Log
 import android.widget.Toast
 import com.example.pocu.data.AppPreferences
-import com.example.pocu.ui.BlockerOverlayActivity
 
 class AppDeviceAdminReceiver : DeviceAdminReceiver() {
 
@@ -16,15 +15,15 @@ class AppDeviceAdminReceiver : DeviceAdminReceiver() {
 
     override fun onEnabled(context: Context, intent: Intent) {
         super.onEnabled(context, intent)
-        val prefs = AppPreferences(context)
-        prefs.setPermissionsGranted(true)
-        prefs.setDeviceAdminGranted(true)
-        // Si estábamos en lockdown y ahora tenemos admin, verificar si podemos salir
-        if (prefs.isLockdownMode()) {
-            checkAndDisableLockdown(context, prefs)
+        Log.d(TAG, "Device Admin enabled")
+
+        try {
+            val prefs = AppPreferences(context)
+            prefs.setPermissionsGranted(true)
+            prefs.setDeviceAdminGranted(true)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error saving prefs: ${e.message}", e)
         }
-        Toast.makeText(context, "✅ Protección activada - La app no puede ser desinstalada", Toast.LENGTH_LONG).show()
-        Log.d(TAG, "Device Admin enabled - protection active")
     }
 
     override fun onDisabled(context: Context, intent: Intent) {
@@ -44,27 +43,7 @@ class AppDeviceAdminReceiver : DeviceAdminReceiver() {
 
     override fun onDisableRequested(context: Context, intent: Intent): CharSequence {
         Log.w(TAG, "!!! Disable requested - warning user !!!")
-
-        val prefs = AppPreferences(context)
-
-        // Si el servicio está habilitado, activar lockdown
-        if (prefs.isServiceEnabled() && prefs.werePermissionsGranted()) {
-            Log.w(TAG, "Service enabled - will activate lockdown if disabled")
-            prefs.setLockdownMode(true)
-            prefs.setLockdownReason("Intento de desactivar Device Admin")
-        }
-
-        // Launch blocker overlay
-        val blockerIntent = Intent(context, BlockerOverlayActivity::class.java).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            putExtra(BlockerOverlayActivity.EXTRA_BLOCKED_PACKAGE, "com.android.settings")
-        }
-        context.startActivity(blockerIntent)
-
-        return "🚨 ADVERTENCIA 🚨\n\n" +
-               "Si desactivas el administrador, TODAS las apps serán bloqueadas.\n\n" +
-               "Solo podrás usar Play Store para reinstalar Pocu.\n\n" +
-               "¿Continuar de todos modos?"
+        return "⚠️ Si desactivas esto, la app podrá ser desinstalada."
     }
 
     @Suppress("UNUSED_PARAMETER")
